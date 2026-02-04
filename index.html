@@ -3,99 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My First Firebase App</title>
+    <title>Modern Firebase CRUD 2026</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        h2 { color: #333; text-align: center; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-add { background: #007bff; color: white; }
-        .btn-add:hover { background: #0056b3; }
-        ul { list-style: none; padding: 0; width: 100%; margin-top: 20px; }
-        li { background: #fff; margin-bottom: 8px; padding: 12px; border-radius: 6px; border-left: 5px solid #007bff; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .actions button { width: auto; padding: 5px 10px; margin-left: 5px; font-size: 12px; }
-        .btn-delete { background: #ff4d4d; color: white; }
-        .btn-edit { background: #ffc107; color: black; }
+        :root {
+            --primary: #4361ee;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --bg: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* --- Loader Styles --- */
+        #loader-wrapper {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.8);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999; visibility: hidden; opacity: 0;
+            transition: 0.3s;
+        }
+        #loader-wrapper.active { visibility: visible; opacity: 1; }
+        .spinner {
+            width: 50px; height: 50px;
+            border: 5px solid #ddd; border-top: 5px solid var(--primary);
+            border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- UI Styles --- */
+        .app-card {
+            background: white; width: 100%; max-width: 500px;
+            padding: 30px; border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { margin: 0; color: var(--primary); font-weight: 500; }
+
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input {
+            flex: 1; padding: 12px 15px; border: 2px solid #eee;
+            border-radius: 12px; outline: none; font-family: 'Kanit';
+            transition: 0.3s;
+        }
+        input:focus { border-color: var(--primary); }
+
+        .btn {
+            padding: 12px 20px; border: none; border-radius: 12px;
+            cursor: pointer; font-family: 'Kanit'; font-weight: 500;
+            transition: 0.3s; display: flex; align-items: center; gap: 5px;
+        }
+        .btn-add { background: var(--primary); color: white; }
+        .btn-add:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(67,97,238,0.3); }
+
+        ul { list-style: none; padding: 0; }
+        li {
+            background: #fff; border: 1px solid #f0f0f0; padding: 15px;
+            border-radius: 15px; margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: 0.3s;
+        }
+        li:hover { transform: scale(1.02); box-shadow: 0 5px 15px rgba(0,0,0,0.03); }
+
+        .item-text { font-size: 1.1rem; color: #444; }
+        .actions { display: flex; gap: 8px; }
+        .btn-edit { background: #fff; color: var(--success); border: 1px solid var(--success); }
+        .btn-delete { background: #fff; color: var(--danger); border: 1px solid var(--danger); }
+        .btn-edit:hover { background: var(--success); color: white; }
+        .btn-delete:hover { background: var(--danger); color: white; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Firebase CRUD 🚀</h2>
-    <input type="text" id="itemName" placeholder="พิมพ์ชื่อข้อมูลตรงนี้...">
-    <button class="btn-add" onclick="handleSave()">บันทึกข้อมูล</button>
+    <div id="loader-wrapper">
+        <div class="spinner"></div>
+    </div>
 
-    <ul id="itemList"></ul>
-</div>
+    <div class="app-card">
+        <div class="header">
+            <h1><i class="fa-solid fa-layer-group"></i> My Data Hub</h1>
+            <p>ระบบจัดการข้อมูลแบบ Real-time</p>
+        </div>
 
-<script type="module">
-    // 1. นำเข้า Firebase SDK
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        <div class="input-group">
+            <input type="text" id="itemName" placeholder="เพิ่มรายการใหม่...">
+            <button class="btn btn-add" onclick="addItem()">
+                <i class="fa-solid fa-plus"></i> เพิ่ม
+            </button>
+        </div>
 
-    // 2. ⚠️ วาง config ที่คุณก๊อปปี้มาจาก Firebase ตรงนี้
-    const firebaseConfig = {
-      apiKey: "AIzaSyAHKKk7gGiXWpCQ__iVb5zC7pN-DndYcRw",
-      authDomain: "pmcoding-d6006.firebaseapp.com",
-      projectId: "pmcoding-d6006",
-      storageBucket: "pmcoding-d6006.firebasestorage.app",
-      messagingSenderId: "393268229281",
-      appId: "1:393268229281:web:1708e1c4622af894222ce0",
-      measurementId: "G-264D575CB6"
-    };
+        <ul id="itemList">
+            </ul>
+    </div>
 
-    // 3. เริ่มต้น Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const colRef = collection(db, "my_items"); // ชื่อ "ตาราง" ใน Firebase
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc, serverTimestamp } 
+        from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // --- ฟังก์ชัน: บันทึก (Create/Update) ---
-    window.handleSave = async () => {
-        const nameInput = document.getElementById('itemName');
-        const name = nameInput.value;
-        if (!name) return alert("กรุณากรอกชื่อ!");
+        // 1. ใส่ Config ของคุณตรงนี้
+        const firebaseConfig = {
+            apiKey: "AIzaSyAHKKk7gGiXWpCQ__iVb5zC7pN-DndYcRw",
+            authDomain: "pmcoding-d6006.firebaseapp.com",
+            projectId: "pmcoding-d6006",
+            storageBucket: "pmcoding-d6006.firebasestorage.app",
+            messagingSenderId: "393268229281",
+            appId: "1:393268229281:web:1708e1c4622af894222ce0",
+            measurementId: "G-264D575CB6"
+          };
 
-        try {
-            await addDoc(colRef, { name: name, createdAt: new Date() });
-            nameInput.value = ""; // ล้างช่องกรอก
-        } catch (e) { console.error(e); }
-    };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const itemsCol = collection(db, "study_items");
 
-    // --- ฟังก์ชัน: แสดงผลแบบ Real-time (Read) ---
-    const q = query(colRef, orderBy("createdAt", "desc"));
-    onSnapshot(q, (snapshot) => {
-        const list = document.getElementById('itemList');
-        list.innerHTML = "";
-        snapshot.forEach((itemDoc) => {
-            const data = itemDoc.data();
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <span>${data.name}</span>
-                <div class="actions">
-                    <button class="btn-edit" onclick="editItem('${itemDoc.id}', '${data.name}')">แก้</button>
-                    <button class="btn-delete" onclick="deleteItem('${itemDoc.id}')">ลบ</button>
-                </div>
-            `;
-            list.appendChild(li);
+        // ฟังก์ชันช่วยเปิด/ปิด Loader
+        const toggleLoader = (show) => {
+            const loader = document.getElementById('loader-wrapper');
+            show ? loader.classList.add('active') : loader.classList.remove('active');
+        };
+
+        // --- [CREATE] เพิ่มข้อมูล ---
+        window.addItem = async () => {
+            const input = document.getElementById('itemName');
+            if (!input.value.trim()) return;
+
+            toggleLoader(true);
+            try {
+                await addDoc(itemsCol, {
+                    name: input.value,
+                    createdAt: serverTimestamp() // ใช้เวลาจาก Server แม่นยำที่สุด
+                });
+                input.value = "";
+            } catch (error) {
+                Swal.fire('Error', error.message, 'error');
+            } finally {
+                toggleLoader(false);
+            }
+        };
+
+        // --- [READ] ดึงข้อมูลแบบ Real-time ---
+        const q = query(itemsCol, orderBy("createdAt", "desc"));
+        onSnapshot(q, (snapshot) => {
+            const list = document.getElementById('itemList');
+            list.innerHTML = "";
+            
+            if (snapshot.empty) {
+                list.innerHTML = "<p style='text-align:center; color:#aaa;'>ไม่มีข้อมูลในระบบ</p>";
+                return;
+            }
+
+            snapshot.forEach((item) => {
+                const data = item.data();
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class="item-text">${data.name}</span>
+                    <div class="actions">
+                        <button class="btn btn-edit" onclick="editItem('${item.id}', '${data.name}')">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="btn btn-delete" onclick="deleteItem('${item.id}')">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
         });
-    });
 
-    // --- ฟังก์ชัน: ลบ (Delete) ---
-    window.deleteItem = async (id) => {
-        if (confirm("ยืนยันการลบ?")) {
-            await deleteDoc(doc(db, "my_items", id));
-        }
-    };
+        // --- [UPDATE] แก้ไขข้อมูล ---
+        window.editItem = async (id, currentName) => {
+            const { value: newName } = await Swal.fire({
+                title: 'แก้ไขข้อมูล',
+                input: 'text',
+                inputValue: currentName,
+                showCancelButton: true,
+                inputValidator: (value) => { if (!value) return 'กรุณากรอกข้อมูล!' }
+            });
 
-    // --- ฟังก์ชัน: แก้ไข (Update) ---
-    window.editItem = async (id, oldName) => {
-        const newName = prompt("แก้ไขชื่อ:", oldName);
-        if (newName && newName !== oldName) {
-            await updateDoc(doc(db, "my_items", id), { name: newName });
-        }
-    };
-</script>
+            if (newName && newName !== currentName) {
+                toggleLoader(true);
+                await updateDoc(doc(db, "study_items", id), { name: newName });
+                toggleLoader(false);
+            }
+        };
 
+        // --- [DELETE] ลบข้อมูล ---
+        window.deleteItem = async (id) => {
+            const result = await Swal.fire({
+                title: 'ยืนยันการลบ?',
+                text: "ข้อมูลจะถูกลบออกจากระบบถาวร",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#f72585',
+                confirmButtonText: 'ลบเลย!',
+                cancelButtonText: 'ยกเลิก'
+            });
+
+            if (result.isConfirmed) {
+                toggleLoader(true);
+                await deleteDoc(doc(db, "study_items", id));
+                toggleLoader(false);
+                Swal.fire('Deleted!', 'ลบข้อมูลเรียบร้อยแล้ว', 'success');
+            }
+        };
+
+    </script>
 </body>
 </html>

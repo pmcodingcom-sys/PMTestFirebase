@@ -100,7 +100,7 @@
         // 1. ตั้งค่า Supabase
         const SUPABASE_URL = 'https://ebritvdvmkpfilbehpaj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicml0dmR2bWtwZmlsYmVocGFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyMTM4NTMsImV4cCI6MjA4NTc4OTg1M30.xF0tZqQtw3NDAvRgM7JXvboiKjkMVnt3K4ZeAycbEy0';
-        const supabase =维持.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const toggleLoader = (show) => document.getElementById('loader').style.display = show ? 'flex' : 'none';
 

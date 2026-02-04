@@ -100,7 +100,7 @@
         // 1. ตั้งค่า Supabase
         const SUPABASE_URL = 'https://ebritvdvmkpfilbehpaj.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVicml0dmR2bWtwZmlsYmVocGFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyMTM4NTMsImV4cCI6MjA4NTc4OTg1M30.xF0tZqQtw3NDAvRgM7JXvboiKjkMVnt3K4ZeAycbEy0';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabase_DB = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const toggleLoader = (show) => document.getElementById('loader').style.display = show ? 'flex' : 'none';
 
@@ -122,18 +122,18 @@
 
             toggleLoader(true);
             try {
-                let imageUrl = "https://via.placeholder.com/100";
+                let imageUrl = "";
                 if (file) {
                     const fileName = Date.now() + "_" + file.name;
-                    const { data: uploadData, error: uploadError } = await supabase.storage
+                    const { data: uploadData, error: uploadError } = await supabase_DB.storage
                         .from('images') // ชื่อ Bucket ที่คุณสร้าง
                         .upload(fileName, file);
                     if (uploadError) throw uploadError;
-                    const { data: urlData } = supabase.storage.from('images').getPublicUrl(fileName);
+                    const { data: urlData } = supabase_DB.storage.from('images').getPublicUrl(fileName);
                     imageUrl = urlData.publicUrl;
                 }
 
-                const { error } = await supabase.from('profiles').insert([{ 
+                const { error } = await supabase_DB.from('profiles').insert([{ 
                     full_name: fullName, nickname: nickName, position, phone, email, image_url: imageUrl 
                 }]);
                 
@@ -151,7 +151,7 @@
 
         // --- [READ] ดึงข้อมูล ---
         async function fetchProfiles() {
-            const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabase_DB.from('profiles').select('*').order('created_at', { ascending: false });
             if (error) return console.error(error);
 
             const container = document.getElementById('profileList');
@@ -175,7 +175,7 @@
             const res = await Swal.fire({ title: 'ลบข้อมูลนี้?', icon: 'warning', showCancelButton: true });
             if (res.isConfirmed) {
                 toggleLoader(true);
-                await supabase.from('profiles').delete().eq('id', id);
+                await supabase_DB.from('profiles').delete().eq('id', id);
                 fetchProfiles();
                 toggleLoader(false);
             }
@@ -183,7 +183,7 @@
 
         function resetForm() {
             document.querySelectorAll('input').forEach(i => i.value = "");
-            document.getElementById('imgPreview').src = "https://via.placeholder.com/100";
+            document.getElementById('imgPreview').src = "";
         }
 
         fetchProfiles(); // โหลดครั้งแรก

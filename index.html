@@ -122,7 +122,7 @@
 
             toggleLoader(true);
             try {
-                let imageUrl = "";
+                let imageUrl = "https://ui-avatars.com/api/?name=User&background=random";
                 if (file) {
                     const fileName = Date.now() + "_" + file.name;
                     const { data: uploadData, error: uploadError } = await supabase_DB.storage
@@ -183,7 +183,7 @@
 
         function resetForm() {
             document.querySelectorAll('input').forEach(i => i.value = "");
-            document.getElementById('imgPreview').src = "";
+            document.getElementById('imgPreview').src = "https://ui-avatars.com/api/?name=User&background=random";
         }
 
         fetchProfiles(); // โหลดครั้งแรก
